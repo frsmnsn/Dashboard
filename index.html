@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>สร้าง Dashboard คุณภาพข้อมูล</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;800&display=swap">
+<style>
+:root{--bg:#eef3f0;--card:#fff;--ink:#12261b;--mut:#5d6f66;--line:#d9e4dd;--g1:#0b4a2a;--g2:#167a45;--g3:#dcefe3;--pink:#c2185b;--bad:#c62f26}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Sarabun,"Noto Sans Thai","Segoe UI",Tahoma,sans-serif;font-size:16px;line-height:1.6}
+header{background:var(--g1);color:#fff;padding:28px 24px 88px;position:relative}
+header:after{content:"";position:absolute;left:0;bottom:0;height:8px;width:22%;background:var(--pink)}
+header .in{max-width:760px;margin:0 auto}
+header h1{margin:0;font-size:28px;font-weight:800}
+header p{margin:4px 0 0;opacity:.8}
+main{max-width:760px;margin:-60px auto 60px;padding:0 16px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:24px;box-shadow:0 10px 30px rgba(11,74,42,.10)}
+.step{display:grid;grid-template-columns:34px 1fr;gap:14px;padding:18px 0;border-top:1px solid var(--line)}
+.step:first-of-type{border-top:0;padding-top:4px}
+.num{width:34px;height:34px;border-radius:50%;background:var(--g1);color:#fff;font-weight:800;display:grid;place-items:center}
+.step.opt .num{background:var(--g3);color:var(--g1)}
+.step h2{margin:3px 0 10px;font-size:17px}
+.step h2 small{font-weight:400;color:var(--mut);font-size:14px}
+.drop{display:block;border:2px dashed var(--line);border-radius:16px;padding:26px 18px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s}
+.drop:hover,.drop.over{border-color:var(--g2);background:var(--g3)}
+.drop.has{border-style:solid;border-color:var(--g2);background:var(--g3);text-align:left;padding:14px 18px}
+.drop b{display:block;font-size:17px}
+.drop span{color:var(--mut);font-size:14px}
+.drop input{position:absolute;width:1px;height:1px;opacity:0}
+.drop:focus-within{outline:3px solid var(--pink);outline-offset:2px}
+.small-drop{padding:14px 18px}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+button,a.btn{font:inherit;font-weight:600;border-radius:12px;padding:11px 18px;cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--g1);text-decoration:none;display:inline-flex;align-items:center;gap:8px}
+button:hover:not(:disabled),a.btn:hover{background:var(--g3)}
+button.main{background:var(--g1);color:#fff;border-color:var(--g1);font-size:17px;padding:14px 22px;width:100%;justify-content:center}
+button.main:hover:not(:disabled){background:var(--g2)}
+button:disabled{opacity:.45;cursor:not-allowed}
+button:focus-visible,a.btn:focus-visible{outline:3px solid var(--pink);outline-offset:2px}
+.status{margin-top:18px;display:flex;align-items:center;gap:10px;font-size:14px;color:var(--mut)}
+.spin{width:16px;height:16px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--g2);animation:sp 1s linear infinite}
+.status.done .spin{display:none}
+.status.err{color:var(--bad)}
+@keyframes sp{to{transform:rotate(360deg)}}
+.result{display:none;margin-top:18px;padding:18px;border-radius:16px;background:var(--g3);border:1px solid var(--g2)}
+.result.show{display:block}
+.result h3{margin:0 0 4px;font-size:17px}
+details{margin-top:14px}
+summary{cursor:pointer;color:var(--mut);font-size:14px}
+pre#log{background:#0b1f14;color:#d7f5e3;border-radius:12px;padding:12px;font-size:12.5px;max-height:260px;overflow:auto;white-space:pre-wrap;margin:8px 0 0}
+.privacy{margin-top:18px;font-size:14px;color:var(--mut);padding-left:12px;border-left:4px solid var(--pink)}
+@media (prefers-reduced-motion:reduce){.spin{animation:none}}
+</style>
+</head>
+<body>
+<header><div class="in">
+  <h1>สร้าง Dashboard คุณภาพข้อมูล</h1>
+  <p>ใส่ไฟล์ผลตรวจจาก IT แล้วกดสร้าง ไม่ต้องติดตั้งโปรแกรม</p>
+</div></header>
+
+<main><div class="panel">
+
+  <section class="step">
+    <div class="num">1</div>
+    <div>
+      <h2>ไฟล์ผลตรวจจาก IT</h2>
+      <label class="drop" id="dropIt">
+        <input type="file" id="fileIt" accept=".xlsx">
+        <b id="nameIt">ลากไฟล์ .xlsx มาวาง หรือคลิกเพื่อเลือก</b>
+        <span id="subIt">ไฟล์ที่มีชีต A1, A2, A3, C1–C4, D1, E1</span>
+      </label>
+    </div>
+  </section>
+
+  <section class="step opt">
+    <div class="num">2</div>
+    <div>
+      <h2>ผลตรวจ B1/B2 ที่กรอกเอง <small>(ไม่บังคับ)</small></h2>
+      <label class="drop small-drop" id="dropCtrl">
+        <input type="file" id="fileCtrl" accept=".xlsx">
+        <b id="nameCtrl">เลือกไฟล์ b_control_template.xlsx ที่กรอกแล้ว</b>
+        <span id="subCtrl">ยังไม่มีไฟล์นี้? เลือกไฟล์ในขั้นที่ 1 แล้วกดดาวน์โหลดเทมเพลต</span>
+      </label>
+      <div class="row">
+        <button id="btnTpl" disabled>ดาวน์โหลดเทมเพลต B1/B2</button>
+        <button id="btnClearCtrl" hidden>ไม่ใช้ไฟล์ B1/B2</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="step">
+    <div class="num">3</div>
+    <div>
+      <button class="main" id="btnBuild" disabled>สร้าง Dashboard</button>
+      <div class="status" id="status"><div class="spin"></div><span id="statusText">กำลังเตรียมเครื่องมือประมวลผล…</span></div>
+      <div class="result" id="result">
+        <h3>สร้าง Dashboard แล้ว</h3>
+        <div class="row">
+          <button id="btnOpen">เปิด Dashboard</button>
+          <a class="btn" id="btnDl" download>ดาวน์โหลดไฟล์ .html</a>
+        </div>
+      </div>
+      <details>
+        <summary>รายละเอียดการทำงาน</summary>
+        <pre id="log"></pre>
+      </details>
+    </div>
+  </section>
+
+  <p class="privacy">ไฟล์ที่เลือกถูกประมวลผลในเบราว์เซอร์ของเครื่องนี้เท่านั้น ไม่มีการส่งข้อมูลออกไปที่เซิร์ฟเวอร์ใด</p>
+</div></main>
+
+<script src="https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const IT_PATH = "/tmp/it.xlsx", CTRL_PATH = "/tmp/control.xlsx";
+let py = null, itFile = null, ctrlFile = null, busy = false, lastUrl = null;
+
+function log(msg, isErr) {
+  const el = $("log");
+  el.textContent += (isErr ? "[!] " : "") + msg + "\n";
+  el.scrollTop = el.scrollHeight;
+}
+function status(text, kind) {
+  $("statusText").textContent = text;
+  $("status").className = "status" + (kind ? " " + kind : "");
+}
+function refresh() {
+  const ok = !!py && !!itFile && !busy;
+  $("btnBuild").disabled = !ok;
+  $("btnTpl").disabled = !ok;
+}
+const tick = () => new Promise(r => setTimeout(r, 60));
+
+/* python ที่ต่อกับ dq_dashboard.py (ใช้ตัวอ่าน/วิเคราะห์/เทมเพลตเดียวกับโปรแกรมบนเครื่อง) */
+const GLUE = `
+import sys, json
+sys.path.insert(0, "/home/pyodide")
+import dq_dashboard as dq
+from datetime import datetime
+
+def web_build(it_path, source_name, ctrl_path=None):
+    data, _ = dq.load_all(it_path)
+    ctrl = dq.load_control(ctrl_path) if ctrl_path else None
+    allsn = [s for k in data if data[k] is not None and "snapshot" in data[k]
+             for s in data[k].snapshot.dropna().unique()]
+    latest = max(allsn) if allsn else None
+    meta = {
+        "title": "รายงานการประเมินและตรวจสอบคุณภาพข้อมูล",
+        "demo": False,
+        "source": source_name,
+        "snapshot": dq.th_date(dq.pd.Timestamp(latest)) if latest is not None else "-",
+        "snapshots": [dq.th_date(dq.pd.Timestamp(s), True) for s in sorted(set(allsn))],
+        "generated": dq.th_date(dq.pd.Timestamp(datetime.now())),
+    }
+    payload = dq.san(dq.build(data, ctrl, meta))
+    js = json.dumps(payload, ensure_ascii=False, allow_nan=False).replace("</", "<\\\\/")
+    html = dq.HTML.replace("__DATA__", js)
+    stamp = (dq.pd.Timestamp(latest) if latest is not None else dq.pd.Timestamp(datetime.now())).strftime("%Y-%m-%d")
+    return [html, stamp]
+
+def web_template(it_path):
+    data, _ = dq.load_all(it_path)
+    out = "/tmp/b_control_template.xlsx"
+    dq.make_template(data, out)
+    return out
+`;
+
+async function boot() {
+  try {
+    status("กำลังเตรียมเครื่องมือประมวลผล (ครั้งแรกใช้เวลาประมาณ 10–30 วินาที)…");
+    py = await loadPyodide({ indexURL: "https://cdn.jsdelivr.net/pyodide/v0.27.2/full/" });
+    py.setStdout({ batched: s => log(s) });
+    py.setStderr({ batched: s => log(s, true) });
+    log("โหลด Python แล้ว กำลังโหลด pandas / openpyxl …");
+    await py.loadPackage(["numpy", "pandas", "micropip"]);
+    await py.pyimport("micropip").install("openpyxl");
+    const res = await fetch("dq_dashboard.py", { cache: "no-store" });
+    if (!res.ok) throw new Error("ไม่พบไฟล์ dq_dashboard.py ในโฟลเดอร์เดียวกับหน้านี้");
+    py.FS.writeFile("/home/pyodide/dq_dashboard.py", await res.text());
+    await py.runPythonAsync(GLUE);
+    log("พร้อมใช้งาน");
+    status(itFile ? "พร้อมแล้ว กดสร้าง Dashboard ได้เลย" : "พร้อมแล้ว เลือกไฟล์ผลตรวจในขั้นที่ 1", "done");
+  } catch (e) {
+    py = null;
+    log(String(e), true);
+    status("เตรียมเครื่องมือไม่สำเร็จ: " + (e.message || e) + " ลองรีเฟรชหน้าอีกครั้ง", "err");
+  }
+  refresh();
+}
+
+function setupDrop(dropId, inputId, onFile) {
+  const drop = $(dropId), input = $(inputId);
+  input.onchange = () => input.files[0] && onFile(input.files[0]);
+  drop.addEventListener("dragover", e => { e.preventDefault(); drop.classList.add("over"); });
+  drop.addEventListener("dragleave", () => drop.classList.remove("over"));
+  drop.addEventListener("drop", e => {
+    e.preventDefault(); drop.classList.remove("over");
+    const f = e.dataTransfer.files[0];
+    if (f) onFile(f);
+  });
+}
+function checkXlsx(f) {
+  if (!/\.xlsx$/i.test(f.name)) { status("ต้องเป็นไฟล์ .xlsx (ไฟล์ที่เลือกคือ " + f.name + ")", "err"); return false; }
+  return true;
+}
+function kb(n) { return n > 1048576 ? (n / 1048576).toFixed(1) + " MB" : Math.ceil(n / 1024) + " KB"; }
+
+setupDrop("dropIt", "fileIt", f => {
+  if (!checkXlsx(f)) return;
+  itFile = f;
+  $("dropIt").classList.add("has");
+  $("nameIt").textContent = f.name;
+  $("subIt").textContent = kb(f.size) + " · คลิกเพื่อเปลี่ยนไฟล์";
+  $("result").classList.remove("show");
+  if (py) status("พร้อมแล้ว กดสร้าง Dashboard ได้เลย", "done");
+  refresh();
+});
+setupDrop("dropCtrl", "fileCtrl", f => {
+  if (!checkXlsx(f)) return;
+  ctrlFile = f;
+  $("dropCtrl").classList.add("has");
+  $("nameCtrl").textContent = f.name;
+  $("subCtrl").textContent = "จะรวมผล B1/B2 เข้าไปใน Dashboard";
+  $("btnClearCtrl").hidden = false;
+});
+$("btnClearCtrl").onclick = () => {
+  ctrlFile = null; $("fileCtrl").value = "";
+  $("dropCtrl").classList.remove("has");
+  $("nameCtrl").textContent = "เลือกไฟล์ b_control_template.xlsx ที่กรอกแล้ว";
+  $("subCtrl").textContent = "ยังไม่มีไฟล์นี้? เลือกไฟล์ในขั้นที่ 1 แล้วกดดาวน์โหลดเทมเพลต";
+  $("btnClearCtrl").hidden = true;
+};
+
+async function run(label, job) {
+  busy = true; refresh();
+  status(label + " (ไฟล์ใหญ่อาจทำให้หน้าค้างสักครู่)");
+  await tick();
+  try {
+    py.FS.writeFile(IT_PATH, new Uint8Array(await itFile.arrayBuffer()));
+    await job();
+  } catch (e) {
+    log(String(e), true);
+    status("ทำไม่สำเร็จ ดูสาเหตุใน 'รายละเอียดการทำงาน' ด้านล่าง", "err");
+    document.querySelector("details").open = true;
+  } finally {
+    busy = false; refresh();
+  }
+}
+
+$("btnBuild").onclick = () => run("กำลังอ่านไฟล์และสร้าง Dashboard…", async () => {
+  let ctrlArg = null;
+  if (ctrlFile) {
+    py.FS.writeFile(CTRL_PATH, new Uint8Array(await ctrlFile.arrayBuffer()));
+    ctrlArg = CTRL_PATH;
+  }
+  log("— อ่านไฟล์: " + itFile.name);
+  const out = py.globals.get("web_build")(IT_PATH, itFile.name, ctrlArg);
+  const [html, stamp] = out.toJs(); out.destroy();
+  if (lastUrl) URL.revokeObjectURL(lastUrl);
+  lastUrl = URL.createObjectURL(new Blob([html], { type: "text/html;charset=utf-8" }));
+  $("btnDl").href = lastUrl;
+  $("btnDl").download = "dashboard_" + stamp + ".html";
+  $("result").classList.add("show");
+  status("สร้าง Dashboard แล้ว", "done");
+  $("btnOpen").focus();
+});
+
+$("btnOpen").onclick = () => { if (lastUrl) window.open(lastUrl, "_blank"); };
+
+$("btnTpl").onclick = () => run("กำลังสร้างเทมเพลต B1/B2…", async () => {
+  const path = py.globals.get("web_template")(IT_PATH);
+  const bytes = py.FS.readFile(path);
+  const url = URL.createObjectURL(new Blob([bytes], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
+  const a = document.createElement("a");
+  a.href = url; a.download = "b_control_template.xlsx"; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+  status("ดาวน์โหลดเทมเพลตแล้ว กรอก ref_value / ref_count แล้วนำกลับมาใส่ในขั้นที่ 2", "done");
+});
+
+boot();
+</script>
+</body>
+</html>
